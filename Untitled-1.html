@@ -42,11 +42,12 @@
             max-width: 1200px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 1fr;
+            grid-template-columns: 1fr 300px;
             gap: 20px;
         }
 
         header {
+            grid-column: 1 / -1;
             text-align: center;
             margin-bottom: 20px;
             padding: 20px;
@@ -133,7 +134,7 @@
 
         .trackers-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
@@ -218,16 +219,83 @@
             margin-bottom: 10px;
         }
 
-        .stats-display {
+        .medicine-item {
             display: flex;
-            justify-content: space-around;
-            margin-top: 10px;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .medicine-name {
             font-size: 10px;
         }
 
+        .sleep-stages {
+            display: flex;
+            height: 20px;
+            margin: 10px 0;
+        }
+
+        .sleep-stage {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            border: 1px solid #000;
+        }
+
+        .awake { background: #ff5555; }
+        .rem { background: #5555ff; }
+        .core { background: #55ff55; }
+        .deep { background: #555555; color: white; }
+
+        .timer-display {
+            font-size: 24px;
+            text-align: center;
+            margin: 10px 0;
+            color: var(--secondary);
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: #000;
+            padding: 10px;
+            border: 3px solid #000;
+            font-size: 12px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
         @media (max-width: 768px) {
-            .trackers-grid {
+            .container {
                 grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                grid-row: 2;
             }
         }
     </style>
@@ -235,16 +303,12 @@
 <body>
     <div class="container">
         <header>
-            <h1>HEALTH TRACKER</h1>
+            <h1>MINECRAFT AMBIENT HEALTH GUARDIAN</h1>
             <div class="clock-calendar">
                 <div id="digital-clock">00:00:00</div>
                 <div id="calendar">January 1, 2023</div>
             </div>
         </header>
-
-        <div class="guardian-container">
-            <div class="guardian-orb" id="guardian"></div>
-        </div>
 
         <main class="trackers-grid">
             <!-- Step Tracker -->
@@ -254,10 +318,8 @@
                     <div class="progress-fill" id="step-progress"></div>
                     <div class="progress-text" id="step-text">0 / 10,000 steps</div>
                 </div>
-                <div class="stats-display">
-                    <div>Daily Avg: <span id="daily-avg">0</span></div>
-                    <div>Weekly Avg: <span id="weekly-avg">0</span></div>
-                </div>
+                <div>Daily Average: <span id="daily-avg">0</span></div>
+                <div>Weekly Average: <span id="weekly-avg">0</span></div>
                 <input type="number" id="step-input" placeholder="Enter steps">
                 <div class="button-group">
                     <button class="pixel-button" id="log-steps">Log Steps</button>
@@ -278,18 +340,175 @@
                     <button class="pixel-button" id="reset-water">Reset</button>
                 </div>
             </div>
+
+            <!-- Medicine Tracker -->
+            <div class="tracker-card">
+                <h2>MEDICINE TRACKER</h2>
+                <input type="text" id="medicine-name" placeholder="Medicine name">
+                <div class="button-group">
+                    <button class="pixel-button" id="add-medicine">Add Medicine</button>
+                </div>
+                <div id="medicine-list"></div>
+            </div>
+
+            <!-- Sleep Tracker -->
+            <div class="tracker-card">
+                <h2>SLEEP TRACKER</h2>
+                <div class="sleep-stages">
+                    <div class="sleep-stage awake">Awake</div>
+                    <div class="sleep-stage rem">REM</div>
+                    <div class="sleep-stage core">Core</div>
+                    <div class="sleep-stage deep">Deep</div>
+                </div>
+                <input type="number" id="sleep-hours" placeholder="Hours slept" min="0" max="24" step="0.5">
+                <div class="button-group">
+                    <button class="pixel-button" id="log-sleep">Log Sleep</button>
+                    <button class="pixel-button" id="view-sleep-summary">Summary</button>
+                </div>
+            </div>
+
+            <!-- Workout Tracker -->
+            <div class="tracker-card">
+                <h2>WORKOUT TRACKER</h2>
+                <select id="workout-type">
+                    <option value="running">Running</option>
+                    <option value="cycling">Cycling</option>
+                    <option value="yoga">Yoga</option>
+                    <option value="weightlifting">Weightlifting</option>
+                </select>
+                <div class="timer-display" id="workout-timer">00:00:00</div>
+                <div class="timer-controls">
+                    <button class="pixel-button" id="start-workout">Start</button>
+                    <button class="pixel-button" id="pause-workout">Pause</button>
+                    <button class="pixel-button" id="reset-workout">Reset</button>
+                </div>
+                <div class="button-group">
+                    <button class="pixel-button" id="log-workout">Log Workout</button>
+                </div>
+            </div>
+
+            <!-- Health Counts Dashboard -->
+            <div class="tracker-card">
+                <h2>HEALTH COUNTS</h2>
+                <div id="health-counts">
+                    <div class="count-item">
+                        <span class="count-label">Total Steps:</span>
+                        <span class="count-value" id="total-steps">0</span>
+                    </div>
+                    <div class="count-item">
+                        <span class="count-label">Total Water:</span>
+                        <span class="count-value" id="total-water">0 L</span>
+                    </div>
+                    <div class="count-item">
+                        <span class="count-label">Total Workouts:</span>
+                        <span class="count-value" id="total-workouts">0</span>
+                    </div>
+                    <div class="count-item">
+                        <span class="count-label">Total Sleep:</span>
+                        <span class="count-value" id="total-sleep">0 hrs</span>
+                    </div>
+                    <div class="count-item">
+                        <span class="count-label">Current Streak:</span>
+                        <span class="count-value" id="current-streak">0 days</span>
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="pixel-button" id="refresh-counts">Refresh</button>
+                    <button class="pixel-button" id="export-data">Export</button>
+                </div>
+            </div>
         </main>
+
+        <aside class="sidebar">
+            <div class="guardian-container">
+                <div class="guardian-orb" id="guardian"></div>
+            </div>
+            
+            <!-- Calendar Widget -->
+            <div class="tracker-card">
+                <h2>CALENDAR</h2>
+                <div id="calendar-widget">
+                    <div class="calendar-header">
+                        <button class="pixel-button" id="prev-month">←</button>
+                        <span id="current-month">January 2023</span>
+                        <button class="pixel-button" id="next-month">→</button>
+                    </div>
+                    <div id="calendar-days" class="calendar-days"></div>
+                </div>
+            </div>
+        </aside>
     </div>
 
-    <audio id="click-sound" preload="auto">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" type="audio/mp3">
-    </audio>
-    <audio id="success-sound" preload="auto">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" type="audio/mp3">
-    </audio>
+    <div class="notification" id="water-reminder">
+        💧 Time to drink water! Stay hydrated!
+    </div>
+
+    <audio id="click-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA"></audio>
+    <audio id="success-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA"></audio>
 
     <script>
+        // API Configuration
+        const API_BASE_URL = 'http://localhost:3000/api';
         
+        // Audio elements (placeholder - would need actual sound files)
+        const clickSound = document.getElementById('click-sound');
+        const successSound = document.getElementById('success-sound');
+        
+        // API Helper Functions
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            try {
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+                
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+                
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'API call failed');
+                }
+                
+                return result;
+            } catch (error) {
+                console.error('API Error:', error);
+                // Fallback to local storage if API is not available
+                return await fallbackToLocalStorage(endpoint, method, data);
+            }
+        }
+        
+        // Fallback to localStorage when API is not available
+        async function fallbackToLocalStorage(endpoint, method, data) {
+            const storageKey = 'healthData';
+            let localData = JSON.parse(localStorage.getItem(storageKey) || '{}');
+            
+            if (method === 'GET') {
+                return localData;
+            } else if (method === 'POST') {
+                // Handle different endpoints
+                if (endpoint === '/steps') {
+                    localData.steps = localData.steps || { daily: 0, goal: 10000, history: [] };
+                    localData.steps.daily += data.steps;
+                    localData.steps.history.push({ date: data.date, steps: data.steps, timestamp: new Date().toISOString() });
+                } else if (endpoint === '/water') {
+                    localData.water = localData.water || { daily: 0, goal: 2.0, history: [] };
+                    localData.water.daily += data.amount;
+                    localData.water.history.push({ date: data.date, amount: data.amount, timestamp: new Date().toISOString() });
+                }
+                
+                localStorage.setItem(storageKey, JSON.stringify(localData));
+                return { success: true, data: localData };
+            }
+            
+            return { success: true };
+        }
+
         // Guardian orb interactions
         const guardian = document.getElementById('guardian');
         
@@ -297,7 +516,13 @@
         function animateGuardian(type) {
             guardian.style.transform = 'scale(1.2)';
             guardian.style.boxShadow = '0 0 30px #55ff55, 0 0 60px #55aaff';
-  
+            
+            if (type === 'success') {
+                successSound.play().catch(e => console.log("Audio play failed:", e));
+            } else {
+                clickSound.play().catch(e => console.log("Audio play failed:", e));
+            }
+            
             setTimeout(() => {
                 guardian.style.transform = '';
                 guardian.style.boxShadow = '';
@@ -307,7 +532,7 @@
         // Digital Clock
         function updateClock() {
             const now = new Date();
-            const timeString = now.toLocaleTimeString('en-US', {hour24: false});
+            const timeString = now.toLocaleTimeString('en-US', {hour12: false});
             document.getElementById('digital-clock').textContent = timeString;
             
             const dateString = now.toLocaleDateString('en-US', { 
@@ -321,80 +546,214 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Step Tracker
+        // Calendar Widget
+        let currentDate = new Date();
+        
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            
+            document.getElementById('current-month').textContent = 
+                currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            const startingDay = firstDay.getDay();
+            
+            const calendarDays = document.getElementById('calendar-days');
+            calendarDays.innerHTML = '';
+            
+            // Add day headers
+            const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            daysOfWeek.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.textContent = day;
+                dayElement.style.fontSize = '8px';
+                dayElement.style.textAlign = 'center';
+                dayElement.style.padding = '5px 0';
+                calendarDays.appendChild(dayElement);
+            });
+            
+            // Add empty cells for days before the first day of the month
+            for (let i = 0; i < startingDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.style.padding = '5px 0';
+                calendarDays.appendChild(emptyCell);
+            }
+            
+            // Add days of the month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.textContent = day;
+                dayElement.style.textAlign = 'center';
+                dayElement.style.padding = '5px 0';
+                dayElement.style.cursor = 'pointer';
+                
+                // Highlight current day
+                const today = new Date();
+                if (day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    dayElement.style.backgroundColor = '#55aaff';
+                    dayElement.style.color = '#000';
+                }
+                
+                dayElement.addEventListener('click', () => {
+                    alert(`Selected date: ${month + 1}/${day}/${year}`);
+                    animateGuardian('click');
+                });
+                
+                calendarDays.appendChild(dayElement);
+            }
+            
+            // Style the calendar grid
+            calendarDays.style.display = 'grid';
+            calendarDays.style.gridTemplateColumns = 'repeat(7, 1fr)';
+            calendarDays.style.gap = '2px';
+        }
+        
+        document.getElementById('prev-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+            animateGuardian('click');
+        });
+        
+        document.getElementById('next-month').addEventListener('click', () => {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+            animateGuardian('click');
+        });
+        
+        renderCalendar();
+
+        // Step Tracker with API Integration
         let steps = 0;
         const stepGoal = 10000;
-        const stepHistory = [];
         
-        document.getElementById('log-steps').addEventListener('click', () => {
+        // Load initial data from API
+        async function loadStepData() {
+            try {
+                const data = await apiCall('/steps');
+                steps = data.daily || 0;
+                updateStepDisplay();
+            } catch (error) {
+                console.error('Failed to load step data:', error);
+            }
+        }
+        
+        document.getElementById('log-steps').addEventListener('click', async () => {
             const stepInput = document.getElementById('step-input');
             const newSteps = parseInt(stepInput.value) || 0;
             
             if (newSteps > 0) {
-                steps += newSteps;
-                stepHistory.push({date: new Date(), steps: newSteps});
-                updateStepDisplay();
-                stepInput.value = '';
-                animateGuardian('success');
+                try {
+                    const result = await apiCall('/steps', 'POST', {
+                        steps: newSteps,
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    
+                    steps = result.data.daily;
+                    updateStepDisplay();
+                    stepInput.value = '';
+                    animateGuardian('success');
+                } catch (error) {
+                    console.error('Failed to log steps:', error);
+                    alert('Failed to log steps. Please try again.');
+                    animateGuardian('click');
+                }
             } else {
                 alert('Please enter a valid number of steps');
                 animateGuardian('click');
             }
         });
         
-        document.getElementById('reset-steps').addEventListener('click', () => {
-            steps = 0;
-            stepHistory.length = 0;
-            updateStepDisplay();
-            animateGuardian('click');
+        document.getElementById('reset-steps').addEventListener('click', async () => {
+            try {
+                await apiCall('/reset-daily', 'POST');
+                steps = 0;
+                updateStepDisplay();
+                animateGuardian('click');
+            } catch (error) {
+                console.error('Failed to reset steps:', error);
+                steps = 0;
+                updateStepDisplay();
+                animateGuardian('click');
+            }
         });
         
-        function updateStepDisplay() {
+        async function updateStepDisplay() {
             const progress = Math.min((steps / stepGoal) * 100, 100);
             document.getElementById('step-progress').style.width = `${progress}%`;
             document.getElementById('step-text').textContent = `${steps.toLocaleString()} / ${stepGoal.toLocaleString()} steps`;
             
-            // Calculate averages
-            if (stepHistory.length > 0) {
-                const totalSteps = stepHistory.reduce((sum, entry) => sum + entry.steps, 0);
-                const dailyAvg = totalSteps / stepHistory.length;
-                document.getElementById('daily-avg').textContent = Math.round(dailyAvg).toLocaleString();
-                
-                // Weekly average (last 7 entries)
-                const recentSteps = stepHistory.slice(-7).reduce((sum, entry) => sum + entry.steps, 0);
-                const weeklyAvg = recentSteps / Math.min(stepHistory.length, 7);
-                document.getElementById('weekly-avg').textContent = Math.round(weeklyAvg).toLocaleString();
-            } else {
-                document.getElementById('daily-avg').textContent = '0';
-                document.getElementById('weekly-avg').textContent = '0';
+            // Load analytics data
+            try {
+                const analytics = await apiCall('/analytics');
+                if (analytics.weeklyStats) {
+                    const weeklySteps = analytics.weeklyStats.steps;
+                    document.getElementById('daily-avg').textContent = Math.round(weeklySteps.current / 7).toLocaleString();
+                    document.getElementById('weekly-avg').textContent = Math.round(weeklySteps.current).toLocaleString();
+                }
+            } catch (error) {
+                console.error('Failed to load analytics:', error);
             }
         }
         
-        updateStepDisplay();
+        // Load data on page load
+        loadStepData();
 
-        // Water Tracker
+        // Water Tracker with API Integration
         let waterIntake = 0;
         const waterGoal = 2.0; // liters
         
-        document.getElementById('log-water').addEventListener('click', () => {
+        // Load initial water data from API
+        async function loadWaterData() {
+            try {
+                const data = await apiCall('/water');
+                waterIntake = data.daily || 0;
+                updateWaterDisplay();
+            } catch (error) {
+                console.error('Failed to load water data:', error);
+            }
+        }
+        
+        document.getElementById('log-water').addEventListener('click', async () => {
             const waterInput = document.getElementById('water-input');
             const amount = parseFloat(waterInput.value) || 0;
             
             if (amount > 0) {
-                waterIntake += amount;
-                updateWaterDisplay();
-                waterInput.value = '';
-                animateGuardian('success');
+                try {
+                    const result = await apiCall('/water', 'POST', {
+                        amount: amount,
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    
+                    waterIntake = result.data.daily;
+                    updateWaterDisplay();
+                    waterInput.value = '';
+                    animateGuardian('success');
+                } catch (error) {
+                    console.error('Failed to log water:', error);
+                    alert('Failed to log water intake. Please try again.');
+                    animateGuardian('click');
+                }
             } else {
                 alert('Please enter a valid amount of water');
                 animateGuardian('click');
             }
         });
         
-        document.getElementById('reset-water').addEventListener('click', () => {
-            waterIntake = 0;
-            updateWaterDisplay();
-            animateGuardian('click');
+        document.getElementById('reset-water').addEventListener('click', async () => {
+            try {
+                await apiCall('/reset-daily', 'POST');
+                waterIntake = 0;
+                updateWaterDisplay();
+                animateGuardian('click');
+            } catch (error) {
+                console.error('Failed to reset water:', error);
+                waterIntake = 0;
+                updateWaterDisplay();
+                animateGuardian('click');
+            }
         });
         
         function updateWaterDisplay() {
@@ -403,8 +762,204 @@
             document.getElementById('water-text').textContent = `${waterIntake.toFixed(1)} / ${waterGoal} L`;
         }
         
-        updateWaterDisplay();
+        // Load data on page load
+        loadWaterData();
 
+        // Medicine Tracker
+        let medicines = [];
+        
+        document.getElementById('add-medicine').addEventListener('click', () => {
+            const medicineName = document.getElementById('medicine-name').value.trim();
+            
+            if (medicineName) {
+                medicines.push({
+                    name: medicineName,
+                    count: 0
+                });
+                
+                updateMedicineList();
+                document.getElementById('medicine-name').value = '';
+                animateGuardian('success');
+            } else {
+                alert('Please enter a medicine name');
+                animateGuardian('click');
+            }
+        });
+        
+        function updateMedicineList() {
+            const medicineList = document.getElementById('medicine-list');
+            medicineList.innerHTML = '';
+            
+            medicines.forEach((medicine, index) => {
+                const medicineItem = document.createElement('div');
+                medicineItem.className = 'medicine-item';
+                
+                medicineItem.innerHTML = `
+                    <span class="medicine-name">${medicine.name}</span>
+                    <div>
+                        <button class="pixel-button decrease-med" data-index="${index}">-</button>
+                        <span style="margin: 0 10px; font-size: 10px;">${medicine.count}</span>
+                        <button class="pixel-button increase-med" data-index="${index}">+</button>
+                    </div>
+                `;
+                
+                medicineList.appendChild(medicineItem);
+            });
+            
+            // Add event listeners to the new buttons
+            document.querySelectorAll('.increase-med').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    medicines[index].count++;
+                    updateMedicineList();
+                    animateGuardian('success');
+                });
+            });
+            
+            document.querySelectorAll('.decrease-med').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    if (medicines[index].count > 0) {
+                        medicines[index].count--;
+                        updateMedicineList();
+                        animateGuardian('click');
+                    }
+                });
+            });
+        }
+
+        // Sleep Tracker
+        let sleepHistory = [];
+        
+        document.getElementById('log-sleep').addEventListener('click', () => {
+            const sleepHours = parseFloat(document.getElementById('sleep-hours').value) || 0;
+            
+            if (sleepHours > 0 && sleepHours <= 24) {
+                sleepHistory.push({
+                    date: new Date(),
+                    hours: sleepHours,
+                    quality: calculateSleepQuality(sleepHours)
+                });
+                
+                document.getElementById('sleep-hours').value = '';
+                alert(`Logged ${sleepHours} hours of sleep`);
+                animateGuardian('success');
+            } else {
+                alert('Please enter a valid number of hours (0-24)');
+                animateGuardian('click');
+            }
+        });
+        
+        document.getElementById('view-sleep-summary').addEventListener('click', () => {
+            if (sleepHistory.length === 0) {
+                alert('No sleep data available');
+                animateGuardian('click');
+                return;
+            }
+            
+            const totalHours = sleepHistory.reduce((sum, entry) => sum + entry.hours, 0);
+            const avgHours = totalHours / sleepHistory.length;
+            const avgQuality = sleepHistory.reduce((sum, entry) => sum + entry.quality, 0) / sleepHistory.length;
+            
+            alert(`Sleep Summary:\nAverage Hours: ${avgHours.toFixed(1)}\nAverage Quality: ${avgQuality.toFixed(1)}/10`);
+            animateGuardian('click');
+        });
+        
+        function calculateSleepQuality(hours) {
+            // Simple quality calculation based on hours
+            if (hours >= 7 && hours <= 9) return 10;
+            if (hours >= 6 && hours < 7) return 7;
+            if (hours > 9 && hours <= 10) return 8;
+            if (hours < 6) return 5;
+            return 3; // For excessive sleep
+        }
+
+        // Workout Tracker
+        let workoutTimer = null;
+        let workoutSeconds = 0;
+        let isWorkoutRunning = false;
+        
+        document.getElementById('start-workout').addEventListener('click', () => {
+            if (!isWorkoutRunning) {
+                isWorkoutRunning = true;
+                workoutTimer = setInterval(() => {
+                    workoutSeconds++;
+                    updateWorkoutTimer();
+                }, 1000);
+                animateGuardian('click');
+            }
+        });
+        
+        document.getElementById('pause-workout').addEventListener('click', () => {
+            if (isWorkoutRunning) {
+                clearInterval(workoutTimer);
+                isWorkoutRunning = false;
+                animateGuardian('click');
+            }
+        });
+        
+        document.getElementById('reset-workout').addEventListener('click', () => {
+            clearInterval(workoutTimer);
+            workoutSeconds = 0;
+            isWorkoutRunning = false;
+            updateWorkoutTimer();
+            animateGuardian('click');
+        });
+        
+        document.getElementById('log-workout').addEventListener('click', () => {
+            if (workoutSeconds > 0) {
+                const workoutType = document.getElementById('workout-type').value;
+                const hours = Math.floor(workoutSeconds / 3600);
+                const minutes = Math.floor((workoutSeconds % 3600) / 60);
+                const seconds = workoutSeconds % 60;
+                
+                alert(`Logged ${workoutType} workout: ${hours}h ${minutes}m ${seconds}s`);
+                
+                // Reset timer after logging
+                clearInterval(workoutTimer);
+                workoutSeconds = 0;
+                isWorkoutRunning = false;
+                updateWorkoutTimer();
+                animateGuardian('success');
+            } else {
+                alert('Please start a workout first');
+                animateGuardian('click');
+            }
+        });
+        
+        function updateWorkoutTimer() {
+            const hours = Math.floor(workoutSeconds / 3600);
+            const minutes = Math.floor((workoutSeconds % 3600) / 60);
+            const seconds = workoutSeconds % 60;
+            
+            const timeString = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('workout-timer').textContent = timeString;
+        }
+
+        // Water Reminder Notification
+        function showWaterReminder() {
+            const notification = document.getElementById('water-reminder');
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 5000);
+            
+            // Schedule next reminder in 1 hour
+            setTimeout(showWaterReminder, 60 * 60 * 1000);
+        }
+        
+        // Start water reminders after 1 hour
+        setTimeout(showWaterReminder, 60 * 60 * 1000);
+
+        // Add click sound to all buttons
+        document.querySelectorAll('.pixel-button').forEach(button => {
+            button.addEventListener('click', () => {
+                animateGuardian('click');
+            });
+        });
     </script>
 </body>
 </html>
