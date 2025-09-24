@@ -1,0 +1,43 @@
+{
+  "users": [
+    {
+      "id": "1758739401993",
+      "username": "testuser1758739401815",
+      "password": "$2b$10$nqxjugt0BVBXa5f1AQr6guHSxJ1KUgq8pUn59SET3oAN/dTCa6MMW",
+      "createdAt": "2025-09-24T18:43:21.993Z"
+    },
+    {
+      "id": "1758739436496",
+      "username": "testuser1758739436303",
+      "password": "$2b$10$S/BURhRNDNZ1d8vNQQOg2.UiYKnEnjR6B0vyjdkdBtMVJ.NNQiGP6",
+      "createdAt": "2025-09-24T18:43:56.496Z"
+    },
+    {
+      "id": "1758739499417",
+      "username": "testuser1758739499187",
+      "password": "$2b$10$F7Nsh0CMA/uZx2FIdB0XD.MOz10jCNsbnAjh.d7bW97s1Fy0NyI7.",
+      "createdAt": "2025-09-24T18:44:59.417Z"
+    },
+    {
+      "id": "1758739588826",
+      "username": "pewpewdogg",
+      "password": "$2b$10$hIzwa3PU99mbUz3ecKZ3KeKama2gSkcLolUjqWcCieNaPXy7iGzZ6",
+      "createdAt": "2025-09-24T18:46:28.826Z"
+    },
+    {
+      "id": "1758739781124",
+      "username": "testuser1758739780919",
+      "password": "$2b$10$g01gRHX7ijP1J0fTozuKtut.SxylvohQcr8dbbZHFVrCWi4DBfWFK",
+      "createdAt": "2025-09-24T18:49:41.124Z"
+    }
+  ],
+  "healthData": {
+    "steps": [],
+    "water": [],
+    "mood": [],
+    "sleep": [],
+    "workouts": [],
+    "medicines": []
+  },
+  "settings": {}
+}
