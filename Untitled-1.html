@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minecraft Ambient Health Guardian</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #55aaff;
+            --secondary: #ffaa55;
+            --accent: #55ff55;
+            --background: #1a1a2e;
+            --text: #ffffff;
+            --pixel-size: 4px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #1a1a2e, #16213e, #0f3460, #533483);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 4px solid var(--primary);
+            background: rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 15px var(--primary);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--accent);
+            text-shadow: 3px 3px 0 #000;
+        }
+
+        .clock-calendar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        #digital-clock {
+            font-size: 18px;
+            color: var(--secondary);
+        }
+
+        #calendar {
+            font-size: 14px;
+            color: var(--primary);
+        }
+
+        .guardian-container {
+            position: relative;
+            height: 300px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 4px solid var(--secondary);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .guardian-orb {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, var(--primary) 0%, var(--accent) 70%);
+            border-radius: 50%;
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+            box-shadow: 0 0 20px var(--primary), 0 0 40px var(--accent);
+            transition: all 0.3s ease;
+        }
+
+        .guardian-orb::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 30px 0 0 white;
+        }
+
+        .guardian-orb::after {
+            content: '';
+            position: absolute;
+            top: 35px;
+            left: 25px;
+            width: 50px;
+            height: 20px;
+            background: #333;
+            border-radius: 50%;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .trackers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .tracker-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 0;
+            transition: all 0.3s ease;
+        }
+
+        .tracker-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .tracker-card h2 {
+            font-size: 14px;
+            margin-bottom: 15px;
+            color: var(--secondary);
+            text-align: center;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: #333;
+            border: 2px solid #000;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            color: white;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .pixel-button {
+            background: var(--primary);
+            border: 2px solid #000;
+            color: white;
+            padding: 8px 12px;
+            font-size: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            image-rendering: pixelated;
+        }
+
+        .pixel-button:hover {
+            background: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .pixel-button:active {
+            transform: translateY(0);
+        }
+
+        input, select {
+            background: #333;
+            border: 2px solid #000;
+            color: white;
+            padding: 8px;
+            font-size: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .stats-display {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            font-size: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .trackers-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>HEALTH TRACKER</h1>
+            <div class="clock-calendar">
+                <div id="digital-clock">00:00:00</div>
+                <div id="calendar">January 1, 2023</div>
+            </div>
+        </header>
+
+        <div class="guardian-container">
+            <div class="guardian-orb" id="guardian"></div>
+        </div>
+
+        <main class="trackers-grid">
+            <!-- Step Tracker -->
+            <div class="tracker-card">
+                <h2>STEP TRACKER</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="step-progress"></div>
+                    <div class="progress-text" id="step-text">0 / 10,000 steps</div>
+                </div>
+                <div class="stats-display">
+                    <div>Daily Avg: <span id="daily-avg">0</span></div>
+                    <div>Weekly Avg: <span id="weekly-avg">0</span></div>
+                </div>
+                <input type="number" id="step-input" placeholder="Enter steps">
+                <div class="button-group">
+                    <button class="pixel-button" id="log-steps">Log Steps</button>
+                    <button class="pixel-button" id="reset-steps">Reset</button>
+                </div>
+            </div>
+
+            <!-- Water Tracker -->
+            <div class="tracker-card">
+                <h2>WATER TRACKER</h2>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="water-progress"></div>
+                    <div class="progress-text" id="water-text">0 / 2.0 L</div>
+                </div>
+                <input type="number" id="water-input" placeholder="Liters" step="0.1" min="0" max="5">
+                <div class="button-group">
+                    <button class="pixel-button" id="log-water">Log Water</button>
+                    <button class="pixel-button" id="reset-water">Reset</button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <audio id="click-sound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3" type="audio/mp3">
+    </audio>
+    <audio id="success-sound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" type="audio/mp3">
+    </audio>
+
+    <script>
+        
+        // Guardian orb interactions
+        const guardian = document.getElementById('guardian');
+        
+        // Function to animate guardian
+        function animateGuardian(type) {
+            guardian.style.transform = 'scale(1.2)';
+            guardian.style.boxShadow = '0 0 30px #55ff55, 0 0 60px #55aaff';
+  
+            setTimeout(() => {
+                guardian.style.transform = '';
+                guardian.style.boxShadow = '';
+            }, 500);
+        }
+
+        // Digital Clock
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', {hour24: false});
+            document.getElementById('digital-clock').textContent = timeString;
+            
+            const dateString = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            document.getElementById('calendar').textContent = dateString;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Step Tracker
+        let steps = 0;
+        const stepGoal = 10000;
+        const stepHistory = [];
+        
+        document.getElementById('log-steps').addEventListener('click', () => {
+            const stepInput = document.getElementById('step-input');
+            const newSteps = parseInt(stepInput.value) || 0;
+            
+            if (newSteps > 0) {
+                steps += newSteps;
+                stepHistory.push({date: new Date(), steps: newSteps});
+                updateStepDisplay();
+                stepInput.value = '';
+                animateGuardian('success');
+            } else {
+                alert('Please enter a valid number of steps');
+                animateGuardian('click');
+            }
+        });
+        
+        document.getElementById('reset-steps').addEventListener('click', () => {
+            steps = 0;
+            stepHistory.length = 0;
+            updateStepDisplay();
+            animateGuardian('click');
+        });
+        
+        function updateStepDisplay() {
+            const progress = Math.min((steps / stepGoal) * 100, 100);
+            document.getElementById('step-progress').style.width = `${progress}%`;
+            document.getElementById('step-text').textContent = `${steps.toLocaleString()} / ${stepGoal.toLocaleString()} steps`;
+            
+            // Calculate averages
+            if (stepHistory.length > 0) {
+                const totalSteps = stepHistory.reduce((sum, entry) => sum + entry.steps, 0);
+                const dailyAvg = totalSteps / stepHistory.length;
+                document.getElementById('daily-avg').textContent = Math.round(dailyAvg).toLocaleString();
+                
+                // Weekly average (last 7 entries)
+                const recentSteps = stepHistory.slice(-7).reduce((sum, entry) => sum + entry.steps, 0);
+                const weeklyAvg = recentSteps / Math.min(stepHistory.length, 7);
+                document.getElementById('weekly-avg').textContent = Math.round(weeklyAvg).toLocaleString();
+            } else {
+                document.getElementById('daily-avg').textContent = '0';
+                document.getElementById('weekly-avg').textContent = '0';
+            }
+        }
+        
+        updateStepDisplay();
+
+        // Water Tracker
+        let waterIntake = 0;
+        const waterGoal = 2.0; // liters
+        
+        document.getElementById('log-water').addEventListener('click', () => {
+            const waterInput = document.getElementById('water-input');
+            const amount = parseFloat(waterInput.value) || 0;
+            
+            if (amount > 0) {
+                waterIntake += amount;
+                updateWaterDisplay();
+                waterInput.value = '';
+                animateGuardian('success');
+            } else {
+                alert('Please enter a valid amount of water');
+                animateGuardian('click');
+            }
+        });
+        
+        document.getElementById('reset-water').addEventListener('click', () => {
+            waterIntake = 0;
+            updateWaterDisplay();
+            animateGuardian('click');
+        });
+        
+        function updateWaterDisplay() {
+            const progress = Math.min((waterIntake / waterGoal) * 100, 100);
+            document.getElementById('water-progress').style.width = `${progress}%`;
+            document.getElementById('water-text').textContent = `${waterIntake.toFixed(1)} / ${waterGoal} L`;
+        }
+        
+        updateWaterDisplay();
+
+    </script>
+</body>
+</html>
