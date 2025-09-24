@@ -386,37 +386,6 @@
                     <button class="pixel-button" id="log-workout">Log Workout</button>
                 </div>
             </div>
-
-            <!-- Health Counts Dashboard -->
-            <div class="tracker-card">
-                <h2>HEALTH COUNTS</h2>
-                <div id="health-counts">
-                    <div class="count-item">
-                        <span class="count-label">Total Steps:</span>
-                        <span class="count-value" id="total-steps">0</span>
-                    </div>
-                    <div class="count-item">
-                        <span class="count-label">Total Water:</span>
-                        <span class="count-value" id="total-water">0 L</span>
-                    </div>
-                    <div class="count-item">
-                        <span class="count-label">Total Workouts:</span>
-                        <span class="count-value" id="total-workouts">0</span>
-                    </div>
-                    <div class="count-item">
-                        <span class="count-label">Total Sleep:</span>
-                        <span class="count-value" id="total-sleep">0 hrs</span>
-                    </div>
-                    <div class="count-item">
-                        <span class="count-label">Current Streak:</span>
-                        <span class="count-value" id="current-streak">0 days</span>
-                    </div>
-                </div>
-                <div class="button-group">
-                    <button class="pixel-button" id="refresh-counts">Refresh</button>
-                    <button class="pixel-button" id="export-data">Export</button>
-                </div>
-            </div>
         </main>
 
         <aside class="sidebar">
@@ -447,67 +416,9 @@
     <audio id="success-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA"></audio>
 
     <script>
-        // API Configuration
-        const API_BASE_URL = 'http://localhost:3000/api';
-        
         // Audio elements (placeholder - would need actual sound files)
         const clickSound = document.getElementById('click-sound');
         const successSound = document.getElementById('success-sound');
-        
-        // API Helper Functions
-        async function apiCall(endpoint, method = 'GET', data = null) {
-            try {
-                const options = {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                };
-                
-                if (data) {
-                    options.body = JSON.stringify(data);
-                }
-                
-                const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
-                const result = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(result.error || 'API call failed');
-                }
-                
-                return result;
-            } catch (error) {
-                console.error('API Error:', error);
-                // Fallback to local storage if API is not available
-                return await fallbackToLocalStorage(endpoint, method, data);
-            }
-        }
-        
-        // Fallback to localStorage when API is not available
-        async function fallbackToLocalStorage(endpoint, method, data) {
-            const storageKey = 'healthData';
-            let localData = JSON.parse(localStorage.getItem(storageKey) || '{}');
-            
-            if (method === 'GET') {
-                return localData;
-            } else if (method === 'POST') {
-                // Handle different endpoints
-                if (endpoint === '/steps') {
-                    localData.steps = localData.steps || { daily: 0, goal: 10000, history: [] };
-                    localData.steps.daily += data.steps;
-                    localData.steps.history.push({ date: data.date, steps: data.steps, timestamp: new Date().toISOString() });
-                } else if (endpoint === '/water') {
-                    localData.water = localData.water || { daily: 0, goal: 2.0, history: [] };
-                    localData.water.daily += data.amount;
-                    localData.water.history.push({ date: data.date, amount: data.amount, timestamp: new Date().toISOString() });
-                }
-                
-                localStorage.setItem(storageKey, JSON.stringify(localData));
-                return { success: true, data: localData };
-            }
-            
-            return { success: true };
-        }
 
         // Guardian orb interactions
         const guardian = document.getElementById('guardian');
@@ -625,135 +536,76 @@
         
         renderCalendar();
 
-        // Step Tracker with API Integration
+        // Step Tracker
         let steps = 0;
         const stepGoal = 10000;
+        const stepHistory = [];
         
-        // Load initial data from API
-        async function loadStepData() {
-            try {
-                const data = await apiCall('/steps');
-                steps = data.daily || 0;
-                updateStepDisplay();
-            } catch (error) {
-                console.error('Failed to load step data:', error);
-            }
-        }
-        
-        document.getElementById('log-steps').addEventListener('click', async () => {
+        document.getElementById('log-steps').addEventListener('click', () => {
             const stepInput = document.getElementById('step-input');
             const newSteps = parseInt(stepInput.value) || 0;
             
             if (newSteps > 0) {
-                try {
-                    const result = await apiCall('/steps', 'POST', {
-                        steps: newSteps,
-                        date: new Date().toISOString().split('T')[0]
-                    });
-                    
-                    steps = result.data.daily;
-                    updateStepDisplay();
-                    stepInput.value = '';
-                    animateGuardian('success');
-                } catch (error) {
-                    console.error('Failed to log steps:', error);
-                    alert('Failed to log steps. Please try again.');
-                    animateGuardian('click');
-                }
+                steps += newSteps;
+                stepHistory.push({date: new Date(), steps: newSteps});
+                updateStepDisplay();
+                stepInput.value = '';
+                animateGuardian('success');
             } else {
                 alert('Please enter a valid number of steps');
                 animateGuardian('click');
             }
         });
         
-        document.getElementById('reset-steps').addEventListener('click', async () => {
-            try {
-                await apiCall('/reset-daily', 'POST');
-                steps = 0;
-                updateStepDisplay();
-                animateGuardian('click');
-            } catch (error) {
-                console.error('Failed to reset steps:', error);
-                steps = 0;
-                updateStepDisplay();
-                animateGuardian('click');
-            }
+        document.getElementById('reset-steps').addEventListener('click', () => {
+            steps = 0;
+            updateStepDisplay();
+            animateGuardian('click');
         });
         
-        async function updateStepDisplay() {
+        function updateStepDisplay() {
             const progress = Math.min((steps / stepGoal) * 100, 100);
             document.getElementById('step-progress').style.width = `${progress}%`;
             document.getElementById('step-text').textContent = `${steps.toLocaleString()} / ${stepGoal.toLocaleString()} steps`;
             
-            // Load analytics data
-            try {
-                const analytics = await apiCall('/analytics');
-                if (analytics.weeklyStats) {
-                    const weeklySteps = analytics.weeklyStats.steps;
-                    document.getElementById('daily-avg').textContent = Math.round(weeklySteps.current / 7).toLocaleString();
-                    document.getElementById('weekly-avg').textContent = Math.round(weeklySteps.current).toLocaleString();
-                }
-            } catch (error) {
-                console.error('Failed to load analytics:', error);
+            // Calculate averages
+            if (stepHistory.length > 0) {
+                const totalSteps = stepHistory.reduce((sum, entry) => sum + entry.steps, 0);
+                const dailyAvg = totalSteps / stepHistory.length;
+                document.getElementById('daily-avg').textContent = Math.round(dailyAvg).toLocaleString();
+                
+                // Weekly average (last 7 entries)
+                const recentSteps = stepHistory.slice(-7).reduce((sum, entry) => sum + entry.steps, 0);
+                const weeklyAvg = recentSteps / Math.min(stepHistory.length, 7);
+                document.getElementById('weekly-avg').textContent = Math.round(weeklyAvg).toLocaleString();
             }
         }
         
-        // Load data on page load
-        loadStepData();
+        updateStepDisplay();
 
-        // Water Tracker with API Integration
+        // Water Tracker
         let waterIntake = 0;
         const waterGoal = 2.0; // liters
         
-        // Load initial water data from API
-        async function loadWaterData() {
-            try {
-                const data = await apiCall('/water');
-                waterIntake = data.daily || 0;
-                updateWaterDisplay();
-            } catch (error) {
-                console.error('Failed to load water data:', error);
-            }
-        }
-        
-        document.getElementById('log-water').addEventListener('click', async () => {
+        document.getElementById('log-water').addEventListener('click', () => {
             const waterInput = document.getElementById('water-input');
             const amount = parseFloat(waterInput.value) || 0;
             
             if (amount > 0) {
-                try {
-                    const result = await apiCall('/water', 'POST', {
-                        amount: amount,
-                        date: new Date().toISOString().split('T')[0]
-                    });
-                    
-                    waterIntake = result.data.daily;
-                    updateWaterDisplay();
-                    waterInput.value = '';
-                    animateGuardian('success');
-                } catch (error) {
-                    console.error('Failed to log water:', error);
-                    alert('Failed to log water intake. Please try again.');
-                    animateGuardian('click');
-                }
+                waterIntake += amount;
+                updateWaterDisplay();
+                waterInput.value = '';
+                animateGuardian('success');
             } else {
                 alert('Please enter a valid amount of water');
                 animateGuardian('click');
             }
         });
         
-        document.getElementById('reset-water').addEventListener('click', async () => {
-            try {
-                await apiCall('/reset-daily', 'POST');
-                waterIntake = 0;
-                updateWaterDisplay();
-                animateGuardian('click');
-            } catch (error) {
-                console.error('Failed to reset water:', error);
-                waterIntake = 0;
-                updateWaterDisplay();
-                animateGuardian('click');
-            }
+        document.getElementById('reset-water').addEventListener('click', () => {
+            waterIntake = 0;
+            updateWaterDisplay();
+            animateGuardian('click');
         });
         
         function updateWaterDisplay() {
@@ -762,8 +614,7 @@
             document.getElementById('water-text').textContent = `${waterIntake.toFixed(1)} / ${waterGoal} L`;
         }
         
-        // Load data on page load
-        loadWaterData();
+        updateWaterDisplay();
 
         // Medicine Tracker
         let medicines = [];
